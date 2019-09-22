@@ -42,7 +42,7 @@ fun view(model: Model): View<Msg> =
 class TableViewSample : Application() {
     override fun start(primaryStage: Stage) {
         val mq = LinkedBlockingQueue<Msg>()
-        val node = makeNode(view(initialModel), mq)
+        var node = makeNode(view(initialModel), mq)
 
         val root = javafx.scene.layout.VBox()
         root.getChildren().addAll(node)
@@ -52,7 +52,7 @@ class TableViewSample : Application() {
             while (true) {
                 val msg = mq.take()
                 model = update(msg, model)
-                updateNode(view(model), node, mq, root)
+                node = updateNode(view(model), node, mq, root)
                 println(model)
             }
         }
