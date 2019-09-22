@@ -14,38 +14,41 @@ import melomancool.table.ButtonView
 import melomancool.table.TextFieldView
 import melomancool.table.View
 
-fun <Mes> makeTextField(view: TextFieldView<Mes>, messageQueue: BlockingQueue<Mes>): TextField {
+fun <Mes> makeNode(view: TextFieldView<Mes>, mq: BlockingQueue<Mes>): TextField {
     val tf = TextField(view.text)
     if (view.onInput != null) {
         tf.textProperty().addListener { _observable, _oldValue, newValue ->
-            messageQueue.offer(view.onInput!!(newValue))
+            mq.offer(view.onInput!!(newValue))
         }
     }
     return tf
 }
 
-fun <Mes> makeButton(view: ButtonView<Mes>, messageQueue: BlockingQueue<Mes>): Button {
+fun <Mes> makeNode(view: ButtonView<Mes>, mq: BlockingQueue<Mes>): Button {
     val button = Button(view.text)
     if (view.onClick != null) {
         button.setOnAction { _event ->
-            messageQueue.offer(view.onClick!!)
+            mq.offer(view.onClick!!)
         }
     }
     return button
 }
 
+fun <Mes> makeNode(view: BoxView<Mes>, mq: BlockingQueue<Mes>): VBox {
+    val vbox = VBox()
+    val nodes = view.children.map{ makeNode(it, mq) }
+    vbox.getChildren().addAll(nodes)
+    return vbox
+}
+
 fun <Mes> makeNode(view: View<Mes>, mq: BlockingQueue<Mes>): Node {
-    return when(view) {
+    return when (view) {
         is TextFieldView ->
-            makeTextField(view, mq)
+            makeNode(view, mq)
         is ButtonView ->
-            makeButton(view, mq)
-        is BoxView -> {
-            val vbox = VBox()
-            val nodes = view.children.map{ makeNode(it, mq) }
-            vbox.getChildren().addAll(nodes)
-            vbox
-        }
+            makeNode(view, mq)
+        is BoxView ->
+            makeNode(view, mq)
     }
 }
 
