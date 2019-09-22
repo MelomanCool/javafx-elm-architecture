@@ -45,7 +45,7 @@ class TableViewSample : Application() {
         val node = makeNode(view(initialModel), mq)
 
         val root = javafx.scene.layout.VBox()
-        root.getChildren().addAll(node.jfx)
+        root.getChildren().addAll(node)
         
         thread(start = true, isDaemon = true) {
             var model = initialModel
