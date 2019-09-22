@@ -58,8 +58,10 @@ fun <Mes> replaceChild(
     jfxParent: Pane
 ): Node {
     val child = makeNode(view, mq)
-    jfxParent.getChildren().set(0, child)
-    // jfxParent.getChildren().addAll(child)
+    Platform.runLater {
+        jfxParent.getChildren().setAll(child)
+        // jfxParent.getChildren().addAll(child)
+    }
     return child
 }
 
@@ -70,25 +72,33 @@ fun <Mes> updateNode(
     jfxParent: Pane
 ): Node {
     return when (node) {
-        is TextField ->
+        is TextField -> {
             when (view) {
                 is TextFieldView -> {
                     Platform.runLater {
                         if (node.getText() != view.text) {
                             node.setText(view.text)
                         }
+                        // FIXME: remove old listener and add the new one
                     }
                     node
                 }
                 else ->
                     replaceChild(view, mq, jfxParent)
             }
-        is Button ->
+        }
+        is Button -> {
             when (view) {
                 is ButtonView -> {
                     Platform.runLater {
                         if (node.getText() != view.text) {
                             node.setText(view.text)
+                        }
+                        node.setOnAction(null) // disable action
+                        if (view.onClick != null) {
+                            node.setOnAction { _event ->
+                                mq.offer(view.onClick!!)
+                            }
                         }
                     }
                     node
@@ -96,15 +106,18 @@ fun <Mes> updateNode(
                 else ->
                     replaceChild(view, mq, jfxParent)
             }
-        is VBox ->
+        }
+        is VBox -> {
             when (view) {
                 is BoxView ->
                     updateBox(view, node, mq)
                 else ->
                     replaceChild(view, mq, jfxParent)
             }
-        else ->
+        }
+        else -> {
             TextField("Unknown node")
+        }
     }
 }
 
@@ -113,11 +126,18 @@ fun <Mes> updateBox(
     node: VBox,
     mq: BlockingQueue<Mes>
 ): VBox {
-    val results = view.children.mapIndexed{ i, x ->
-        updateNode(x, node.getChildren()[i], mq, node)
+    val results = mutableListOf<Node>()
+    val minSize = minOf(view.children.size, node.getChildren().size)
+    val maxSize = maxOf(view.children.size, node.getChildren().size)
+    for (i in 0 until minSize) {
+        results.add(updateNode(view.children[i], node.getChildren()[i], mq, node))
+    }
+    for (i in minSize until maxSize) {
+        results.add(makeNode(view.children[i], mq))
     }
     Platform.runLater {
-        node.getChildren().setAll(results)
+        node.getChildren().clear()
+        node.getChildren().addAll(results)
     }
     return node
 }

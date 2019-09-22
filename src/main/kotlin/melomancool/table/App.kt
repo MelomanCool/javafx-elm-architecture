@@ -6,9 +6,7 @@ import kotlin.concurrent.thread
 
 import javafx.application.Application
 import javafx.scene.Scene
-import javafx.scene.control.TextField
 import javafx.stage.Stage
-import javafx.beans.property.SimpleStringProperty
 
 import melomancool.table.jfx.makeNode
 import melomancool.table.jfx.updateNode
@@ -19,6 +17,7 @@ data class Model(val counter: Int)
 sealed class Msg
 object Increment: Msg()
 object Decrement: Msg()
+object Reset: Msg()
 
 
 val initialModel = Model(0)
@@ -26,18 +25,24 @@ val initialModel = Model(0)
 fun update(msg: Msg, model: Model): Model {
     return when (msg) {
         Increment ->
-            model.copy(model.counter + 1)
+            Model(model.counter + 1)
         Decrement ->
-            model.copy(model.counter - 1)
+            Model(model.counter - 1)
+        Reset ->
+            Model(0)
     }
 }
 
 fun view(model: Model): View<Msg> =
-    BoxView<Msg>(listOf(
-        ButtonView("+", onClick = Increment),
-        TextFieldView<Msg>(model.counter.toString()),
-        ButtonView("-", onClick = Decrement)
-    ))
+    if (model.counter != 5) {
+        BoxView<Msg>(listOf(
+            ButtonView("+", onClick = Increment),
+            TextFieldView<Msg>(model.counter.toString()),
+            ButtonView("-", onClick = Decrement)
+        ))
+    } else {
+        ButtonView("Huh?", onClick = Reset)
+    }
 
 class TableViewSample : Application() {
     override fun start(primaryStage: Stage) {
